@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>関西弁ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .convert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+
+        #outputLabel {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        #output {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100px;
+            background-color: #f9f9f9;
+            resize: vertical;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            margin-top: 15px;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-feedback {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #4CAF50;
+            min-height: 20px;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>関西弁ツール</h1>
+        
+        <div class="form-group">
+            <label for="input">入力テキスト</label>
+            <textarea id="input" placeholder="ここに文字を入力してください"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="convert-btn" onclick="convertToKansaiBen()">関西弁化</button>
+        </div>
+
+        <div class="form-group">
+            <label id="outputLabel" for="output">関西弁に変換された文字</label>
+            <textarea id="output" readonly></textarea>
+        </div>
+
+        <button class="copy-btn" onclick="copyToClipboard()">コピー</button>
+        <div class="copy-feedback" id="feedback"></div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <script>
+        async function convertToKansaiBen() {
+            const input = document.getElementById('input').value.trim();
+            const output = document.getElementById('output');
+            const errorMessage = document.getElementById('errorMessage');
+            const feedback = document.getElementById('feedback');
+
+            // クリア
+            errorMessage.textContent = '';
+            feedback.textContent = '';
+
+            if (!input) {
+                errorMessage.textContent = 'テキストを入力してください';
+                return;
+            }
+
+            // ローディング表示
+            output.value = '変換中...';
+            output.style.opacity = '0.6';
+
+            try {
+                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: "claude-sonnet-4-20250514",
+                        max_tokens: 1000,
+                        messages: [
+                            {
+                                role: "user",
+                                content: `以下のテキストを関西弁に自然な形で変換してください。元のテキストの内容は変えずに、言葉遣いだけを関西弁に変えてください。説明や補足は不要で、変換後の関西弁だけを出力してください。\n\nテキスト：${input}`
+                            }
+                        ],
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('APIリクエストに失敗しました');
+                }
+
+                const data = await response.json();
+                const convertedText = data.content[0].text;
+                
+                output.value = convertedText;
+                output.style.opacity = '1';
+                feedback.textContent = '';
+
+            } catch (error) {
+                output.value = '';
+                output.style.opacity = '1';
+                errorMessage.textContent = 'エラーが発生しました: ' + error.message;
+            }
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            const feedback = document.getElementById('feedback');
+
+            if (!output.value) {
+                feedback.textContent = 'コピーするテキストがありません';
+                feedback.style.color = '#d32f2f';
+                return;
+            }
+
+            navigator.clipboard.writeText(output.value).then(() => {
+                feedback.textContent = 'コピーしました！';
+                feedback.style.color = '#4CAF50';
+                setTimeout(() => {
+                    feedback.textContent = '';
+                }, 2000);
+            }).catch(() => {
+                feedback.textContent = 'コピーに失敗しました';
+                feedback.style.color = '#d32f2f';
+            });
+        }
+
+        // Enterキーで変換実行
+        document.getElementById('input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                convertToKansaiBen();
+            }
+        });
+    </script>
+</body>
+</html>
